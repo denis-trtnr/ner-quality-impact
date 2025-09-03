@@ -1,0 +1,8 @@
+seed: 42
+scope:
+  token_noise: [test]
+  label_noise: []
+# Simple synonym substitutions outside entities
+token_noise:
+  - name: synonym_substitute
+    params: { p: 0.05 }

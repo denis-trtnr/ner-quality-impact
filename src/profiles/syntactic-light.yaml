@@ -1,0 +1,12 @@
+seed: 42
+scope:
+  token_noise: [test]
+  label_noise: []
+# Light syntactic-ish corruptions
+label_noise:
+  - name: punct_insert
+    params: { prob: 0.05 }
+  - name: punct_delete
+    params: { prob: 0.10 }
+  - name: whitespace_merge
+    params: { prob: 0.05 }
