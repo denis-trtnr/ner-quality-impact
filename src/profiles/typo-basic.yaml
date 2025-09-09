@@ -2,7 +2,6 @@ seed: 42
 scope:
   token_noise: [test]
   label_noise: []
-# Apply typos with entity protection
 token_noise:
   - name: typo_tokens
     params:
