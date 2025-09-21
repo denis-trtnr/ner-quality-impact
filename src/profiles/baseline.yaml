@@ -1,0 +1,6 @@
+seed: 42
+scope:
+  token_noise: []   # no token-level noise
+  label_noise: []   # no label noise
+token_noise: []
+label_noise: null
