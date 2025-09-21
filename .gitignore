@@ -1,5 +1,6 @@
-# output files
+# solution specific
 outputs/
+wandb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
