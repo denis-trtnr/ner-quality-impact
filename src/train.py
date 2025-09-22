@@ -84,7 +84,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="bert-base-cased")
     ap.add_argument("--profile", required=True, help="YAML file with noise steps & scopes")
-    ap.add_argument("--epochs", type=int, default=5)
+    ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--batch_size", type=int, default=16)
     ap.add_argument("--lr", type=float, default=3e-5)
     ap.add_argument("--max_length", type=int, default=256)
@@ -117,6 +117,10 @@ def main():
 
     os.makedirs(args.out, exist_ok=True)
 
+    # Create metadata for W&B
+    profile_name = os.path.basename(args.profile).replace(".yaml", "")
+    run_name = f"{args.model}-{profile_name}-seed{args.seed}"
+
     training_args = TrainingArguments(
         output_dir=args.out,
         evaluation_strategy="epoch",
@@ -131,6 +135,8 @@ def main():
         load_best_model_at_end=True,
         metric_for_best_model="f1",
         greater_is_better=True,
+        report_to=["wandb"],
+        run_name=run_name,
     )
     trainer = Trainer(
         model=model,

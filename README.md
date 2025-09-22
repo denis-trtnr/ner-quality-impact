@@ -23,3 +23,17 @@ python -m src.train \
 
 # Calling script
 bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/typo-basic.yaml
+
+# wandb
+
+wandb sweep sweep_config.yaml
+
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent <SWEEP_ID>
+
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent z8w3kb4e
+
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/<SWEEP_ID>
+
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/2u9hbr6g
+
+wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/2u9hbr6g
