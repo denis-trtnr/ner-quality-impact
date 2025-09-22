@@ -1,0 +1,9 @@
+seed: 42
+scope:
+  token_noise: []
+  label_noise: [test]
+label_noise:
+  - name:: label_spans_uniform
+    params:
+      p: 0.20 # fraction of entity spans to retag
+      to_O_prob: 0.20 # probability to convert a span to O

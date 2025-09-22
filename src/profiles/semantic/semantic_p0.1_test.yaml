@@ -4,4 +4,4 @@ scope:
   label_noise: []
 token_noise:
   - name: synonym_substitute
-    params: { p: 0.05 }
+    params: { p: 0.10 }
