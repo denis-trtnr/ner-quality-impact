@@ -84,7 +84,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="bert-base-cased")
     ap.add_argument("--profile", required=True, help="YAML file with noise steps & scopes")
-    ap.add_argument("--epochs", type=int, default=1)
+    ap.add_argument("--epochs", type=int, default=5)
     ap.add_argument("--batch_size", type=int, default=16)
     ap.add_argument("--lr", type=float, default=3e-5)
     ap.add_argument("--max_length", type=int, default=256)
