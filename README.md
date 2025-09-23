@@ -22,7 +22,8 @@ python -m src.train \
     --out outputs/typo-basic
 
 # Calling script
-bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/typo-basic.yaml
+bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/label-noise/label-noise_p0.1_test.yaml
+bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/syntactic/syntactic_p0.1_test.yaml
 
 # wandb
 
@@ -34,6 +35,6 @@ bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent z8w3kb4e
 
 bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/<SWEEP_ID>
 
-bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/2u9hbr6g
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/rrbi5huf
 
-wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/2u9hbr6g
+wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/rrbi5huf
