@@ -41,14 +41,14 @@ def build_mappers(profile, id2label, label2id):
                 tokens = fn(tokens, ner_tags, id2label, **params)
             elif name in ("synonym_substitute",):
                 tokens = fn(tokens, ner_tags, id2label, **params)
-            elif name in ("token_drop",):
-                tokens = fn(tokens, **params)
-            elif name in ("token_swap_adjacent", "punct_insert", "punct_delete", "whitespace_merge"):
-                tokens = fn(tokens, **params)
+            elif name in ("token_drop", "token_swap_adjacent", "punct_delete", "whitespace_merge"):
+                tokens, ner_tags = fn(tokens, ner_tags, **params)
+            elif name in ("punct_insert"):
+                tokens, ner_tags = fn(tokens, ner_tags, o_label=label2id["O"], **params)
             else:
                 # word-level ops not used directly; keep for extensibility
                 pass
-        return {"tokens": tokens}
+        return {"tokens": tokens, "ner_tags": ner_tags}
 
     def label_mapper(example):
         if not label_step:
@@ -78,6 +78,10 @@ def apply_profile(ds: DatasetDict, profile, id2label, label2id):
     if label_scopes:
         if "train" in label_scopes and profile.get("label_noise"):
             ds["train"] = ds["train"].map(label_mapper)
+        if "validation" in label_scopes and profile.get("label_noise"):
+            ds["validation"] = ds["validation"].map(label_mapper)
+        if "test" in label_scopes and profile.get("label_noise"):
+            ds["test"] = ds["test"].map(label_mapper)
     return ds
 
 def main():
@@ -123,8 +127,10 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=args.out,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
+        overwrite_output_dir=True,
+        eval_strategy="epoch",
+        save_strategy="no",
+        save_total_limit=1,
         learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
@@ -132,7 +138,7 @@ def main():
         weight_decay=0.01,
         logging_steps=50,
         seed=args.seed,
-        load_best_model_at_end=True,
+        load_best_model_at_end=False,
         metric_for_best_model="f1",
         greater_is_better=True,
         report_to=["wandb"],
@@ -143,7 +149,7 @@ def main():
         args=training_args,
         train_dataset=tokenized["train"],
         eval_dataset=tokenized["validation"],
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics_builder(id2label),
     )
