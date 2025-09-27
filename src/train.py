@@ -27,7 +27,7 @@ def load_profile(path: str):
     
 def build_mappers(profile, id2label, label2id):
     token_steps = profile.get("token_noise", [])
-    label_step = profile.get("label_noise", None)
+    label_steps = profile.get("label_noise", [])
 
     def token_mapper(example):
         tokens = example["tokens"]
@@ -51,13 +51,14 @@ def build_mappers(profile, id2label, label2id):
         return {"tokens": tokens, "ner_tags": ner_tags}
 
     def label_mapper(example):
-        if not label_step:
-            return {}
-        name = label_step["name"]
-        fn = LABEL_NOISE[name]
-        params = label_step.get("params", {})
-        new_tags = fn(example["ner_tags"], id2label, label2id, **params)
-        return {"ner_tags": new_tags}
+        ner_tags = example["ner_tags"]
+
+        for step in label_steps:
+            name = step["name"]
+            fn = LABEL_NOISE[name]
+            params = step.get("params", {})
+            ner_tags = fn(ner_tags, id2label, label2id, **params)
+        return {"ner_tags": ner_tags}
 
     return token_mapper, label_mapper
 
