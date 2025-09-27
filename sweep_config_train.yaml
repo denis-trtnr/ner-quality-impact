@@ -1,0 +1,31 @@
+program: src.train
+method: grid
+parameters:
+  model:
+    values:
+      - "bert-base-cased"
+  profile:
+    values:
+      - "src/profiles/orthographic/orthographic_p0.1_train_pe0.yaml"
+      - "src/profiles/orthographic/orthographic_p0.1_train_pe1.yaml"
+      - "src/profiles/orthographic/orthographic_p0.2_train_pe0.yaml"
+      - "src/profiles/orthographic/orthographic_p0.2_train_pe1.yaml"
+      - "src/profiles/orthographic/orthographic_p0.3_train_pe0.yaml"
+      - "src/profiles/orthographic/orthographic_p0.3_train_pe1.yaml"
+      - "src/profiles/label-noise/label-noise_p0.1_train.yaml"
+      - "src/profiles/label-noise/label-noise_p0.2_train.yaml"
+      - "src/profiles/label-noise/label-noise_p0.3_train.yaml"
+      - "src/profiles/syntactic/syntactic_p0.1_train.yaml"
+      - "src/profiles/syntactic/syntactic_p0.2_train.yaml"
+      - "src/profiles/syntactic/syntactic_p0.3_train.yaml"
+  lr:
+    values: [3e-5, 3e-4] # 3e-5, 3e-4
+  seed:
+    values: [331, 42, 20301] # 31, 42, 2030
+
+command:
+  - ${env}
+  - python
+  - -m
+  - ${program}
+  - ${args}

@@ -1,6 +1,6 @@
 seed: 42
 scope:
-  token_noise: [test]
+  token_noise: [train]
   label_noise: []
 token_noise:
   - name: punct_insert

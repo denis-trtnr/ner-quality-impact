@@ -12,16 +12,16 @@ parameters:
       - "src/profiles/orthographic/orthographic_p0.2_test_pe1.yaml"
       - "src/profiles/orthographic/orthographic_p0.3_test_pe0.yaml"
       - "src/profiles/orthographic/orthographic_p0.3_test_pe1.yaml"
-      - "src/profiles/orthographic/label-noise/label-noise_p0.1_test.yaml"
-      - "src/profiles/orthographic/label-noise/label-noise_p0.2_test.yaml"
-      - "src/profiles/orthographic/label-noise/label-noise_p0.3_test.yaml"
-      - "src/profiles/orthographic/syntactic/syntactic_p0.1_test.yaml"
-      - "src/profiles/orthographic/syntactic/syntactic_p0.2_test.yaml"
-      - "src/profiles/orthographic/syntactic/syntactic_p0.3_test.yaml"
+      - "src/profiles/label-noise/label-noise_p0.1_test.yaml"
+      - "src/profiles/label-noise/label-noise_p0.2_test.yaml"
+      - "src/profiles/label-noise/label-noise_p0.3_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.1_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.2_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.3_test.yaml"
   lr:
-    values: [3e-5, 3e-4]
+    values: [3e-5, 3e-4] #3e-5, 3e-4
   seed:
-    values: [31, 42, 2030]
+    values: [31, 42, 2030] #31, 42, 2030
 
 command:
   - ${env}

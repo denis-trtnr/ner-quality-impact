@@ -2,7 +2,7 @@ seed: 42
 scope:
   token_noise: [test]
   label_noise: []
-label_noise:
+token_noise:
   - name: punct_insert
     params: { prob: 0.20 }
   - name: punct_delete
