@@ -41,10 +41,12 @@ def build_mappers(profile, id2label, label2id):
                 tokens = fn(tokens, ner_tags, id2label, **params)
             elif name in ("synonym_substitute",):
                 tokens = fn(tokens, ner_tags, id2label, **params)
-            elif name in ("token_drop", "token_swap_adjacent", "punct_delete", "whitespace_merge"):
+            elif name in ("punct_delete", "whitespace_merge"):
                 tokens, ner_tags = fn(tokens, ner_tags, **params)
-            elif name in ("punct_insert", "syntactic_noise"):
+            elif name in ("punct_insert"):
                 tokens, ner_tags = fn(tokens, ner_tags, o_label=label2id["O"], **params)
+            elif name in ("syntactic_noise"):
+                tokens, ner_tags = fn(tokens, ner_tags, o_label=label2id["O"], id2label=id2label, label2id=label2id, **params)
             else:
                 # word-level ops not used directly; keep for extensibility
                 pass

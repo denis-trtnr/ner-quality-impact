@@ -69,23 +69,3 @@ def typo_tokens(tokens: List[str], ner_tags: List[int], id2label: Dict[int, str]
         else:
             out.append(tok)
     return out
-
-# Token drop/swap (syntactic-ish?)
-def token_drop(tokens: List[str], p_drop: float) -> List[str]:
-    out = []
-    for t in tokens:
-        if random.random() < p_drop:
-            continue
-        out.append(t)
-    return out if out else tokens # avoid empty
-
-def token_swap_adjacent(tokens: List[str], p_swap: float) -> List[str]:
-    i = 0
-    out = tokens[:]
-    while i < len(out) - 1:
-        if random.random() < p_swap:
-            out[i], out[i+1] = out[i+1], out[i]
-            i += 2
-        else:
-            i += 1
-    return out
