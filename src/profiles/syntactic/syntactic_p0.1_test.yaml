@@ -4,8 +4,8 @@ scope:
   label_noise: []
 token_noise:
   - name: punct_insert
-    params: { prob: 0.10 }
+    params: { p: 0.10 }
   - name: punct_delete
-    params: { prob: 0.10 }
+    params: { p: 0.10 }
   - name: whitespace_merge
-    params: { prob: 0.10 }
+    params: { p: 0.10 }
