@@ -10,7 +10,7 @@ from transformers import (
 )
 from datasets import DatasetDict
 
-from .data_preprocessing import load_conll2003, build_label_maps, tokenize_and_align, tokenize_and_align_chars, tokenize_and_align_chars2, tokenize_and_align_chars3
+from .data_preprocessing import load_conll2003, build_label_maps, tokenize_and_align, tokenize_and_align_chars
 from .metrics import compute_metrics_builder
 from .noise import TOKEN_NOISE, LABEL_NOISE
 
@@ -95,6 +95,7 @@ def main():
     ap.add_argument("--max_length", type=int, default=256)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", default="./outputs")
+    ap.add_argument("--dense_train", action="store_true", help="Use dense labels during training")
     args = ap.parse_args()
 
     seed_all(args.seed)
@@ -111,26 +112,30 @@ def main():
     if "roberta" in args.model.lower() or "deberta" in args.model.lower():
         tokenizer = AutoTokenizer.from_pretrained(args.model, add_prefix_space=True)
 
-    # Special case for CANINE regarding character-level tokenization
-    if "canine" in args.model.lower():
-        def tok_map(batch):
-            return tokenize_and_align_chars2(
-                batch,
-                tokenizer,
-                id2label,
-                label2id,
-                max_length=args.max_length
-            )
-    else:
-        def tok_map(batch):
-            return tokenize_and_align(
-                batch,
-                tokenizer,
-                label_all_tokens=False,
-                max_length=args.max_length
-            )
+    # Different tokenization functions for different models and train/eval modes
+    def tok_map_train_normal(b): 
+        return tokenize_and_align(b, tokenizer, label_all_tokens=args.dense_train, max_length=args.max_length)
+    def tok_map_eval_normal(b): 
+        return tokenize_and_align(b, tokenizer, label_all_tokens=False, max_length=args.max_length)
+    def tok_map_train_char_level(b):
+        return tokenize_and_align_chars(b, tokenizer, id2label, label2id, max_length=args.max_length,
+                                     eval_mode=not args.dense_train)  # False => dense; True => first-char
+    def tok_map_eval_char_level(b):
+        return tokenize_and_align_chars(b, tokenizer, id2label, label2id, max_length=args.max_length,
+                                     eval_mode=True)  # always first-char for fair eval
 
-    tokenized = ds.map(tok_map, batched=True)
+    if "canine" in args.model.lower():
+        tokenized = DatasetDict({
+            "train": ds["train"].map(tok_map_train_char_level, batched=True),
+            "validation": ds["validation"].map(tok_map_eval_char_level, batched=True),
+            "test": ds["test"].map(tok_map_eval_char_level, batched=True),
+        })
+    else:
+        tokenized = DatasetDict({
+            "train": ds["train"].map(tok_map_train_normal, batched=True),
+            "validation": ds["validation"].map(tok_map_eval_normal, batched=True),
+            "test": ds["test"].map(tok_map_eval_normal, batched=True),
+        })
 
     model = AutoModelForTokenClassification.from_pretrained(
         args.model,

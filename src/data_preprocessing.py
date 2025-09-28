@@ -52,109 +52,11 @@ def tokenize_and_align_chars(
     tokenizer,
     id2label: Dict[int, str],
     label2id: Dict[str, int],
-    max_length: int = 1024
-):
-    """
-    Tokenize raw text for CANINE and expand word-level labels to characters.
-
-    Each word label is repeated for all its chars:
-      - B-type on first char, I-type on the rest
-      - O/I-type repeated directly
-
-    Returns tokenized batch with char-level "labels".
-    """
-    # Join tokens into raw text (simple whitespace join; can be refined later)
-    texts = [" ".join(tokens) for tokens in batch["tokens"]]
-
-    tokenized = tokenizer(
-        texts,
-        truncation=True,
-        padding="max_length",
-        max_length=max_length,
-    )
-
-    new_labels = []
-    for words, word_labels in zip(batch["tokens"], batch["ner_tags"]):
-        char_labels = []
-        for word, lab_id in zip(words, word_labels):
-            lab_str = id2label[lab_id]
-            if lab_str.startswith("B-"):
-                etype = lab_str[2:]
-                # first char = B-type, rest = I-type
-                char_labels.append(lab_id)
-                char_labels.extend([label2id[f"I-{etype}"]] * (len(word) - 1))
-            else:
-                # O or I-type: just repeat label for all chars
-                char_labels.extend([lab_id] * len(word))
-        # pad/truncate
-        char_labels = char_labels[:max_length] + [-100] * (max_length - len(char_labels))
-        new_labels.append(char_labels)
-
-    tokenized["labels"] = new_labels
-    return tokenized
-
-def tokenize_and_align_chars2(
-    batch,
-    tokenizer,
-    id2label: Dict[int, str],
-    label2id: Dict[str, int],
-    max_length: int = 1024,
-):
-    """
-    Für CANINE (zeichenbasiert).
-
-    Logik:
-      - Texte werden als Rohstring (mit Leerzeichen) tokenisiert.
-      - Wortlabel wird auf alle Zeichen des Wortes ausgedehnt.
-        * B-type: erstes Zeichen = B-type, restliche = I-type
-        * I-type oder O: direkt für alle Zeichen wiederholen
-      - Für Leerzeichen zwischen Wörtern wird ein O-Label gesetzt.
-      - Padding mit -100 auf max_length.
-    """
-    texts = [" ".join(tokens) for tokens in batch["tokens"]]
-    tokenized = tokenizer(
-        texts,
-        truncation=True,
-        padding="max_length",
-        max_length=max_length,
-    )
-
-    new_labels = []
-    for words, word_labels in zip(batch["tokens"], batch["ner_tags"]):
-        char_labels = []
-        for wi, (word, lab_id) in enumerate(zip(words, word_labels)):
-            lab_str = id2label[lab_id]
-            if lab_str.startswith("B-"):
-                etype = lab_str[2:]
-                char_labels.append(lab_id)  # erstes Zeichen = B
-                char_labels.extend([label2id[f"I-{etype}"]] * (len(word) - 1))
-            else:
-                # O oder I-type: für alle Zeichen wiederholen
-                char_labels.extend([lab_id] * len(word))
-
-            # Leerzeichen, außer nach letztem Wort
-            if wi < len(words) - 1:
-                char_labels.append(label2id["O"])
-
-        # auf max_length bringen
-        char_labels = char_labels[:max_length]
-        pad_len = max_length - len(char_labels)
-        char_labels.extend([-100] * pad_len)
-        new_labels.append(char_labels)
-
-    tokenized["labels"] = new_labels
-    return tokenized
-
-def tokenize_and_align_chars3(
-    batch,
-    tokenizer,
-    id2label: Dict[int, str],
-    label2id: Dict[str, int],
     max_length: int = 1024,
     eval_mode: bool = False,
 ):
     """
-    CANINE char-level tokenization.
+    CANINE char-level alignment for word-labeled NER.
 
     Train (eval_mode=False):
       - Expand word labels across all characters.
@@ -166,6 +68,10 @@ def tokenize_and_align_chars3(
       - All remaining characters of that word -> -100 (ignored).
       - Spaces between words -> -100 (ignored).
       - Padding -> -100.
+
+      --> Ground truth + seqeval are word based → give exactly one tag per word
+      --> Avoids tokenizer/length bias (longer words don’t get extra “votes”).
+      --> Mirrors the standard “first-subtoken” eval used for BERT/RoBERTa.
     """
     texts = [" ".join(tokens) for tokens in batch["tokens"]]
     tokenized = tokenizer(
