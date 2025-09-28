@@ -3,9 +3,5 @@ scope:
   token_noise: [train]
   label_noise: []
 token_noise:
-  - name: punct_insert
-    params: { p: 0.20 }
-  - name: punct_delete
-    params: { p: 0.20 }
-  - name: whitespace_merge
+  - name: syntactic_noise
     params: { p: 0.20 }
