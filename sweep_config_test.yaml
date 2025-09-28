@@ -4,8 +4,13 @@ parameters:
   model:
     values:
       - "bert-base-cased"
+      - "roberta-base"
+      - "microsoft/deberta-base"
+      - "distilbert-base-uncased"
+      - "google/canine-c"
   profile:
     values:
+      - "src/profiles/baseline.yaml"
       - "src/profiles/orthographic/orthographic_p0.1_test_pe0.yaml"
       - "src/profiles/orthographic/orthographic_p0.1_test_pe1.yaml"
       - "src/profiles/orthographic/orthographic_p0.2_test_pe0.yaml"
