@@ -10,7 +10,7 @@ from transformers import (
 )
 from datasets import DatasetDict
 
-from .data_preprocessing import load_conll2003, build_label_maps, tokenize_and_align
+from .data_preprocessing import load_conll2003, build_label_maps, tokenize_and_align, tokenize_and_align_chars, tokenize_and_align_chars2, tokenize_and_align_chars3
 from .metrics import compute_metrics_builder
 from .noise import TOKEN_NOISE, LABEL_NOISE
 
@@ -107,8 +107,28 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
 
-    def tok_map(batch):
-        return tokenize_and_align(batch, tokenizer, label_all_tokens=False, max_length=args.max_length)
+    # Special case for RoBERTa-like models
+    if "roberta" in args.model.lower() or "deberta" in args.model.lower():
+        tokenizer = AutoTokenizer.from_pretrained(args.model, add_prefix_space=True)
+
+    # Special case for CANINE regarding character-level tokenization
+    if "canine" in args.model.lower():
+        def tok_map(batch):
+            return tokenize_and_align_chars2(
+                batch,
+                tokenizer,
+                id2label,
+                label2id,
+                max_length=args.max_length
+            )
+    else:
+        def tok_map(batch):
+            return tokenize_and_align(
+                batch,
+                tokenizer,
+                label_all_tokens=False,
+                max_length=args.max_length
+            )
 
     tokenized = ds.map(tok_map, batched=True)
 

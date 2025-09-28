@@ -11,6 +11,15 @@ def build_label_maps(features) -> Tuple[Dict[int, str], Dict[str, int]]:
     return id2label, label2id
 
 def tokenize_and_align(batch, tokenizer, label_all_tokens=False, max_length=256):
+    """
+    Tokenize word-level inputs and align labels for subword models (BERT, RoBERTa, etc.).
+
+    Words may split into subwords:
+      - first subword gets the word label
+      - others get -100 (ignored) unless label_all_tokens=True
+
+    Returns tokenized batch with subword-aligned "labels".
+    """
     tokenized = tokenizer(
         batch["tokens"],
         is_split_into_words=True,
@@ -33,6 +42,171 @@ def tokenize_and_align(batch, tokenizer, label_all_tokens=False, max_length=256)
                 label_ids.append(labels[word_idx] if label_all_tokens else -100)
             previous_word_idx = word_idx
         new_labels.append(label_ids)
+
+    tokenized["labels"] = new_labels
+    return tokenized
+
+
+def tokenize_and_align_chars(
+    batch,
+    tokenizer,
+    id2label: Dict[int, str],
+    label2id: Dict[str, int],
+    max_length: int = 1024
+):
+    """
+    Tokenize raw text for CANINE and expand word-level labels to characters.
+
+    Each word label is repeated for all its chars:
+      - B-type on first char, I-type on the rest
+      - O/I-type repeated directly
+
+    Returns tokenized batch with char-level "labels".
+    """
+    # Join tokens into raw text (simple whitespace join; can be refined later)
+    texts = [" ".join(tokens) for tokens in batch["tokens"]]
+
+    tokenized = tokenizer(
+        texts,
+        truncation=True,
+        padding="max_length",
+        max_length=max_length,
+    )
+
+    new_labels = []
+    for words, word_labels in zip(batch["tokens"], batch["ner_tags"]):
+        char_labels = []
+        for word, lab_id in zip(words, word_labels):
+            lab_str = id2label[lab_id]
+            if lab_str.startswith("B-"):
+                etype = lab_str[2:]
+                # first char = B-type, rest = I-type
+                char_labels.append(lab_id)
+                char_labels.extend([label2id[f"I-{etype}"]] * (len(word) - 1))
+            else:
+                # O or I-type: just repeat label for all chars
+                char_labels.extend([lab_id] * len(word))
+        # pad/truncate
+        char_labels = char_labels[:max_length] + [-100] * (max_length - len(char_labels))
+        new_labels.append(char_labels)
+
+    tokenized["labels"] = new_labels
+    return tokenized
+
+def tokenize_and_align_chars2(
+    batch,
+    tokenizer,
+    id2label: Dict[int, str],
+    label2id: Dict[str, int],
+    max_length: int = 1024,
+):
+    """
+    Für CANINE (zeichenbasiert).
+
+    Logik:
+      - Texte werden als Rohstring (mit Leerzeichen) tokenisiert.
+      - Wortlabel wird auf alle Zeichen des Wortes ausgedehnt.
+        * B-type: erstes Zeichen = B-type, restliche = I-type
+        * I-type oder O: direkt für alle Zeichen wiederholen
+      - Für Leerzeichen zwischen Wörtern wird ein O-Label gesetzt.
+      - Padding mit -100 auf max_length.
+    """
+    texts = [" ".join(tokens) for tokens in batch["tokens"]]
+    tokenized = tokenizer(
+        texts,
+        truncation=True,
+        padding="max_length",
+        max_length=max_length,
+    )
+
+    new_labels = []
+    for words, word_labels in zip(batch["tokens"], batch["ner_tags"]):
+        char_labels = []
+        for wi, (word, lab_id) in enumerate(zip(words, word_labels)):
+            lab_str = id2label[lab_id]
+            if lab_str.startswith("B-"):
+                etype = lab_str[2:]
+                char_labels.append(lab_id)  # erstes Zeichen = B
+                char_labels.extend([label2id[f"I-{etype}"]] * (len(word) - 1))
+            else:
+                # O oder I-type: für alle Zeichen wiederholen
+                char_labels.extend([lab_id] * len(word))
+
+            # Leerzeichen, außer nach letztem Wort
+            if wi < len(words) - 1:
+                char_labels.append(label2id["O"])
+
+        # auf max_length bringen
+        char_labels = char_labels[:max_length]
+        pad_len = max_length - len(char_labels)
+        char_labels.extend([-100] * pad_len)
+        new_labels.append(char_labels)
+
+    tokenized["labels"] = new_labels
+    return tokenized
+
+def tokenize_and_align_chars3(
+    batch,
+    tokenizer,
+    id2label: Dict[int, str],
+    label2id: Dict[str, int],
+    max_length: int = 1024,
+    eval_mode: bool = False,
+):
+    """
+    CANINE char-level tokenization.
+
+    Train (eval_mode=False):
+      - Expand word labels across all characters.
+      - Insert 'O' between words (spaces).
+      - Padding -> -100.
+
+    Eval/Test (eval_mode=True) [FAIR WORD-LEVEL EVAL]:
+      - Only the FIRST character of each word gets the word label.
+      - All remaining characters of that word -> -100 (ignored).
+      - Spaces between words -> -100 (ignored).
+      - Padding -> -100.
+    """
+    texts = [" ".join(tokens) for tokens in batch["tokens"]]
+    tokenized = tokenizer(
+        texts,
+        truncation=True,
+        padding="max_length",
+        max_length=max_length,
+    )
+
+    new_labels = []
+    for words, word_labels in zip(batch["tokens"], batch["ner_tags"]):
+        char_labels = []
+
+        for wi, (word, lab_id) in enumerate(zip(words, word_labels)):
+            lab_str = id2label[lab_id]
+
+            if eval_mode:
+                # EVAL/TEST: one label per word, at the first char only
+                if len(word) > 0:
+                    char_labels.append(lab_id)                 # first char carries the word tag
+                    char_labels.extend([-100] * (len(word)-1)) # rest ignored
+                # ignore space after word
+                if wi < len(words) - 1:
+                    char_labels.append(-100)
+            else:
+                # TRAIN: dense char supervision
+                if lab_str.startswith("B-"):
+                    etype = lab_str[2:]
+                    char_labels.append(lab_id)  # first char = B-type
+                    char_labels.extend([label2id[f"I-{etype}"]] * (len(word) - 1))
+                else:
+                    # O or I-* repeated for all chars
+                    char_labels.extend([lab_id] * len(word))
+                # space as O
+                if wi < len(words) - 1:
+                    char_labels.append(label2id["O"])
+
+        # pad/truncate
+        char_labels = char_labels[:max_length]
+        char_labels.extend([-100] * (max_length - len(char_labels)))
+        new_labels.append(char_labels)
 
     tokenized["labels"] = new_labels
     return tokenized
