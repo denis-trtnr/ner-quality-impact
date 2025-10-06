@@ -23,11 +23,25 @@ python -m src.train \
 
 # Calling script
 bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/label-noise/label-noise_p0.1_test.yaml
+bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/orthographic/orthographic_p0.1_test_pe1.yaml
 bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/syntactic/syntactic_p0.1_test.yaml
+
+
+bash scripts/run_profile_pegasus.sh google/canine-s src/profiles/baseline.yaml 1024
+bash scripts/run_profile_pegasus.sh google/canine-s src/profiles/orthographic/orthographic_p0.1_test_pe1.yaml 1024
+bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/syntactic/syntactic_p0.1_test2.yaml
+bert-base-cased
+roberta-base
+microsoft/deberta-base
+distilbert-base-cased
+albert-base-v2
+google/canine-c
+answerdotai/ModernBERT-base
 
 # wandb
 
-wandb sweep sweep_config.yaml
+wandb sweep sweep_config_test.yaml
+wandb sweep sweep_config_train.yaml
 
 bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent <SWEEP_ID>
 
@@ -35,6 +49,11 @@ bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent z8w3kb4e
 
 bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/<SWEEP_ID>
 
-bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/rrbi5huf
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/jgjn02mg
 
-wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/rrbi5huf
+wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/jgjn02mg
+
+
+bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh wandb agent denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/p9d55dpg
+
+wandb sweep --stop denistrautner-dhbw-duale-hochschule-baden-w-rttemberg/ner-quality-impact/p9d55dpg

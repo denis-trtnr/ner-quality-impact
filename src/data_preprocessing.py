@@ -71,7 +71,7 @@ def tokenize_and_align_chars(
 
       --> Ground truth + seqeval are word based → give exactly one tag per word
       --> Avoids tokenizer/length bias (longer words don’t get extra “votes”).
-      --> Mirrors the standard “first-subtoken” eval used for BERT/RoBERTa.
+      --> Mirrors the standard “first-subtoken” eval used for BERT like models.
     """
     texts = [" ".join(tokens) for tokens in batch["tokens"]]
     tokenized = tokenizer(
