@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from collections import defaultdict
 
 import nltk
+nltk.download('wordnet')
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from .utils import (
@@ -126,7 +127,7 @@ def semantic_noise(
     
     if "synonym" in grouped_ops:
         for i in grouped_ops["synonym"]:
-            replacement = get_synonym_for_token(new_tokens, pos_tags, i)
+            replacement = get_synonym_for_token(new_tokens[i], pos_tags[i])
             if new_tokens[i].istitle(): replacement = replacement.title()
             elif new_tokens[i].isupper(): replacement = replacement.upper()
             new_tokens[i] = replacement
@@ -134,7 +135,7 @@ def semantic_noise(
     if "word_embs" in grouped_ops:
         model = load_static_embedding_model(kwargs.get("model_path", "glove-wiki-gigaword-100"))
         for i in grouped_ops["word_embs"]:
-            replacement = get_word_embedding_for_token(new_tokens, i, model)
+            replacement = get_word_embedding_for_token(new_tokens[i], model)
             if new_tokens[i].istitle(): replacement = replacement.title()
             elif new_tokens[i].isupper(): replacement = replacement.upper()
             new_tokens[i] = replacement

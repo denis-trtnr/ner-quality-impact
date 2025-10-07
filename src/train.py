@@ -25,13 +25,14 @@ def load_profile(path: str):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
     
-def build_mappers(profile, id2label, label2id):
+def build_mappers(profile, id2label, label2id, id2pos):
     token_steps = profile.get("token_noise", [])
     label_steps = profile.get("label_noise", [])
 
     def token_mapper(example):
         tokens = example["tokens"]
         ner_tags = example["ner_tags"]
+        pos_tags = [id2pos[tag_id] for tag_id in example["pos_tags"]]
         for step in token_steps:
             name = step["name"]
             fn = TOKEN_NOISE[name]
@@ -39,8 +40,8 @@ def build_mappers(profile, id2label, label2id):
             # adapt signatures per function
             if name == "typo_tokens":
                 tokens = fn(tokens, ner_tags, id2label, **params)
-            elif name in ("synonym_substitute",):
-                tokens = fn(tokens, ner_tags, id2label, **params)
+            elif name in ("semantic_noise",):
+                tokens = fn(tokens, pos_tags, ner_tags, id2label, **params)
             elif name in ("punct_delete", "whitespace_merge"):
                 tokens, ner_tags = fn(tokens, ner_tags, **params)
             elif name in ("punct_insert"):
@@ -64,12 +65,12 @@ def build_mappers(profile, id2label, label2id):
 
     return token_mapper, label_mapper
 
-def apply_profile(ds: DatasetDict, profile, id2label, label2id):
+def apply_profile(ds: DatasetDict, profile, id2label, label2id, id2pos):
     scope = profile.get("scope", {})
     token_scopes = scope.get("token_noise", []) # e.g., ["test"] or ["train","test"]
     label_scopes = scope.get("label_noise", [])
 
-    token_mapper, label_mapper = build_mappers(profile, id2label, label2id)
+    token_mapper, label_mapper = build_mappers(profile, id2label, label2id, id2pos)
 
     if token_scopes:
         if "train" in token_scopes and profile.get("token_noise"):
@@ -103,10 +104,12 @@ def main():
     seed_all(args.seed)
 
     ds = load_conll2003()
-    id2label, label2id = build_label_maps(ds["train"].features)
+    id2label, label2id = build_label_maps(ds["train"].features, "ner_tags")
+
+    id2pos, pos2id = build_label_maps(ds["train"].features, "pos_tags")
 
     profile = load_profile(args.profile)
-    ds = apply_profile(ds, profile, id2label, label2id)
+    ds = apply_profile(ds, profile, id2label, label2id, id2pos)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
 

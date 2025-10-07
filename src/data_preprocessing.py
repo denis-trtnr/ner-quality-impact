@@ -4,8 +4,12 @@ from datasets import load_dataset, ClassLabel
 def load_conll2003():
     return load_dataset("conll2003", trust_remote_code=True)
 
-def build_label_maps(features) -> Tuple[Dict[int, str], Dict[str, int]]:
-    ner_feature: ClassLabel = features["ner_tags"].feature
+def build_label_maps(features, feature_name: str) -> Tuple[Dict[int, str], Dict[str, int]]:
+    """
+    Builds id-to-label and label-to-id mappings for a given feature.
+    This is a generic function.
+    """
+    ner_feature: ClassLabel = features[feature_name].feature
     id2label = {i: ner_feature.names[i] for i in range(ner_feature.num_classes)}
     label2id = {v: k for k, v in id2label.items()}
     return id2label, label2id

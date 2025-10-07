@@ -3,5 +3,8 @@ scope:
   token_noise: [test]
   label_noise: []
 token_noise:
-  - name: synonym_substitute
-    params: { p: 0.10 }
+  - name: semantic_noise
+    params:
+      p: 0.10
+      entity_strategy: "protect"
+      ops: ["synonym"] #"contextual", "word_embs", "synonym"
