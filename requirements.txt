@@ -1,0 +1,8 @@
+datasets==3.3.2
+evaluate==0.4.3
+gensim==4.3.3
+nltk==3.9.2
+numpy<2.0
+PyYAML==6.0.3
+seqeval==1.2.2
+transformers[torch]==4.47.1
