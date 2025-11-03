@@ -113,8 +113,8 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
 
-    # Special case for RoBERTa-like models
-    if "roberta" in args.model.lower() or "deberta" in args.model.lower():
+    # Special case for some models
+    if any(x in args.model.lower() for x in ["roberta", "deberta", "xlnet"]):
         tokenizer = AutoTokenizer.from_pretrained(args.model, add_prefix_space=True)
 
     # Different tokenization functions for different models and train/eval modes
