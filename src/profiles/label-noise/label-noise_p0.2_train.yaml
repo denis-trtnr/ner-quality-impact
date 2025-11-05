@@ -3,7 +3,6 @@ scope:
   token_noise: []
   label_noise: [train]
 label_noise:
-  - name: label_spans_uniform
+  - name: apply_label_noise_on_spans
     params:
-      p: 0.20 # fraction of entity spans to retag
-      to_O_prob: 0.20 # probability to convert a span to O
+      p: 0.20

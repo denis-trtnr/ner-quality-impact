@@ -1,0 +1,9 @@
+seed: 42
+scope:
+  token_noise: [test]
+  label_noise: []
+token_noise:
+  - name: typo_tokens
+    params:
+      p: 0.20 # fraction of tokens per sentence
+      entity_strategy: "all" # "protect", "entities_only", "all"

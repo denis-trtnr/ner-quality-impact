@@ -3,7 +3,7 @@ scope:
   token_noise: [test]
   label_noise: []
 token_noise:
-  - name: typo_tokens
+  - name: semantic_noise
     params:
       p: 0.10 # fraction of tokens per sentence
-      protect_entities: false
+      entity_strategy: "protect" # "protect", "entities_only", "all"

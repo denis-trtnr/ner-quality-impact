@@ -1,0 +1,25 @@
+program: src.train
+method: grid
+parameters:
+  model:
+    values:
+      - "bert-base-cased"
+      - "roberta-base"
+      - "microsoft/deberta-base"
+      - "distilbert-base-uncased"
+      - "google/canine-c"
+      - "xlnet-base-cased"
+  profile:
+    values:
+      - "src/profiles/baseline.yaml"
+  lr:
+    values: [2e-5, 3e-5, 5e-5]
+  seed:
+    values: [31, 42, 2030]
+
+command:
+  - ${env}
+  - python
+  - -m
+  - ${program}
+  - ${args}

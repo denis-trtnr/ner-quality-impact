@@ -1,9 +1,9 @@
 seed: 42
 scope:
-  token_noise: [test]
+  token_noise: [train]
   label_noise: []
 token_noise:
   - name: typo_tokens
     params:
       p: 0.30 # fraction of tokens per sentence
-      protect_entities: false
+      entity_strategy: "protect" # "protect", "entities_only", "all"

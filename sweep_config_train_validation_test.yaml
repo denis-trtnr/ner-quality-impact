@@ -1,0 +1,42 @@
+program: src.train
+method: grid
+parameters:
+  model:
+    values:
+      - "bert-base-cased"
+      - "roberta-base"
+      - "microsoft/deberta-base"
+      - "distilbert-base-uncased"
+      - "google/canine-c"
+      - "xlnet-base-cased"
+  profile:
+    values:
+      - "src/profiles/orthographic/orthographic_p0.1_train_validation_test_all.yaml"
+      - "src/profiles/orthographic/orthographic_p0.2_train_validation_test_all.yaml"
+      - "src/profiles/orthographic/orthographic_p0.3_train_validation_test_all.yaml"
+      - "src/profiles/semantic/semantic_p0.1_train_validation_test_all.yaml"
+      - "src/profiles/semantic/semantic_p0.2_train_validation_test_all.yaml"
+      - "src/profiles/semantic/semantic_p0.3_train_validation_test_all.yaml"
+      #- "src/profiles/orthographic/orthographic_p0.1_train_validation_test_protect.yaml"
+      #- "src/profiles/orthographic/orthographic_p0.2_train_validation_test_protect.yaml"
+      #- "src/profiles/orthographic/orthographic_p0.3_train_validation_test_protect.yaml"
+      #- "src/profiles/semantic/semantic_p0.1_train_validation_test_protect.yaml"
+      #- "src/profiles/semantic/semantic_p0.2_train_validation_test_protect.yaml"
+      #- "src/profiles/semantic/semantic_p0.3_train_validation_test_protect.yaml"
+      - "src/profiles/label-noise/label-noise_p0.1_train_validation_test.yaml"
+      - "src/profiles/label-noise/label-noise_p0.2_train_validation_test.yaml"
+      - "src/profiles/label-noise/label-noise_p0.3_train_validation_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.1_train_validation_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.2_train_validation_test.yaml"
+      - "src/profiles/syntactic/syntactic_p0.3_train_validation_test.yaml"
+  lr:
+    values: [3e-5]
+  seed:
+    values: [31, 42, 2030]
+
+command:
+  - ${env}
+  - python
+  - -m
+  - ${program}
+  - ${args}

@@ -1,7 +1,7 @@
 seed: 42
 scope:
-  token_noise: [test]
+  token_noise: [train, validation, test]
   label_noise: []
 token_noise:
   - name: syntactic_noise
-    params: {p: 0.30}
+    params: { p: 0.10 }

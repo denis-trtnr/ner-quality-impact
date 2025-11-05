@@ -1,8 +1,8 @@
 seed: 42
 scope:
   token_noise: []
-  label_noise: [train]
+  label_noise: [train, validation]
 label_noise:
   - name: apply_label_noise_on_spans
     params:
-      p: 0.10
+      p: 0.20
