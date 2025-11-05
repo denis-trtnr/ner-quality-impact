@@ -33,6 +33,7 @@ def build_mappers(profile, id2label, label2id, id2pos):
         tokens = example["tokens"]
         ner_tags = example["ner_tags"]
         pos_tags = [id2pos[tag_id] for tag_id in example["pos_tags"]]
+
         for step in token_steps:
             name = step["name"]
             fn = TOKEN_NOISE[name]
@@ -51,16 +52,18 @@ def build_mappers(profile, id2label, label2id, id2pos):
             else:
                 # word-level ops not used directly; keep for extensibility
                 pass
+
         return {"tokens": tokens, "ner_tags": ner_tags}
 
     def label_mapper(example):
+        tokens = example["tokens"]
         ner_tags = example["ner_tags"]
 
         for step in label_steps:
             name = step["name"]
             fn = LABEL_NOISE[name]
             params = step.get("params", {})
-            ner_tags = fn(ner_tags, id2label, label2id, **params)
+            ner_tags = fn(tokens, ner_tags, id2label, label2id, **params)
         return {"ner_tags": ner_tags}
 
     return token_mapper, label_mapper
@@ -71,21 +74,51 @@ def apply_profile(ds: DatasetDict, profile, id2label, label2id, id2pos):
     label_scopes = scope.get("label_noise", [])
 
     token_mapper, label_mapper = build_mappers(profile, id2label, label2id, id2pos)
-
+    use_cache = True
     if token_scopes:
         if "train" in token_scopes and profile.get("token_noise"):
-            ds["train"] = ds["train"].map(token_mapper)
+            print("[apply_profile] Mapping token noise on TRAIN...")
+            ds["train"] = ds["train"].map(
+                token_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying token noise (train)"
+            )
         if "validation" in token_scopes and profile.get("token_noise"):
-            ds["validation"] = ds["validation"].map(token_mapper)
+            print("[apply_profile] Mapping token noise on VALIDATION...")
+            ds["validation"] = ds["validation"].map(
+                token_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying token noise (validation)"
+            )
         if "test" in token_scopes and profile.get("token_noise"):
-            ds["test"] = ds["test"].map(token_mapper)
+            print("[apply_profile] Mapping token noise on TEST...")
+            ds["test"] = ds["test"].map(
+                token_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying token noise (test)"
+            )
     if label_scopes:
         if "train" in label_scopes and profile.get("label_noise"):
-            ds["train"] = ds["train"].map(label_mapper)
+            print("[apply_profile] Mapping label noise on TRAIN...")
+            ds["train"] = ds["train"].map(
+                label_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying label noise (train)"
+            )
         if "validation" in label_scopes and profile.get("label_noise"):
-            ds["validation"] = ds["validation"].map(label_mapper)
+            print("[apply_profile] Mapping label noise on VALIDATION...")
+            ds["validation"] = ds["validation"].map(
+                label_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying label noise (validation)"
+            )
         if "test" in label_scopes and profile.get("label_noise"):
-            ds["test"] = ds["test"].map(label_mapper)
+            print("[apply_profile] Mapping label noise on TEST...")
+            ds["test"] = ds["test"].map(
+                label_mapper,
+                load_from_cache_file=use_cache,
+                desc="Applying label noise (test)"
+            )
     return ds
 
 def main():

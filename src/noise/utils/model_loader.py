@@ -19,5 +19,5 @@ def load_contextual_embedding_model(model_name: str):
         print(f"Loading contextual model: {model_name}")
         # Use GPU if available
         device = 0 if torch.cuda.is_available() else -1
-        LOADED_MODELS[model_name] = pipeline('fill-mask', model=model_name, device=device)
+        LOADED_MODELS[model_name] = pipeline('fill-mask', model=model_name, device=device, top_k=30)
     return LOADED_MODELS[model_name]

@@ -1,4 +1,5 @@
 import random
+import numpy as np
 from typing import List, Dict, Any
 from collections import defaultdict
 
@@ -13,30 +14,48 @@ from .utils import (
     load_contextual_embedding_model
 )
 
-def get_synonym_for_token(token: str, pos_tag: str) -> str:
+def get_synonym_for_token(token: str, pos_tag: str, min_diff: float = 0.7) -> str:
     """Finds a synonym for a single token given its part-of-speech tag."""
     lemmatizer = WordNetLemmatizer()
-    wordnet_pos = penn_to_wordnet(pos_tag)
-    
-    synonyms = set()
-    lemma = lemmatizer.lemmatize(token.lower(), pos=wordnet_pos)
-    
-    for syn in wordnet.synsets(lemma, pos=wordnet_pos):
-        for syn_lemma in syn.lemmas():
-            synonym = syn_lemma.name().replace('_', ' ')
-            if synonym.lower() != lemma and ' ' not in synonym:
-                synonyms.add(synonym)
-    
-    if synonyms:
-        return random.choice(list(synonyms))
-    return token
+    wn_pos = penn_to_wordnet(pos_tag)
+    if not wn_pos:
+        return token
+
+    lemma = lemmatizer.lemmatize(token.lower(), pos=wn_pos)
+    synsets = wordnet.synsets(lemma, pos=wn_pos)
+    if not synsets:
+        return token
+
+    base_syn = synsets[0]  # use most frequent sense as reference
+    candidates = set()
+
+    for syn in synsets:
+        sim = base_syn.wup_similarity(syn) or 0.0
+        if sim < min_diff:  # keep only semantically distant synsets
+            for l in syn.lemmas():
+                cand = l.name().replace("_", " ")
+                if cand.lower() != lemma:
+                    candidates.add(cand)
+
+    if not candidates:
+        return token
+
+    replacement = random.choice(list(candidates))
+    if token.istitle():
+        replacement = replacement.title()
+    elif token.isupper():
+        replacement = replacement.upper()
+    return replacement
 
 def get_word_embedding_for_token(token: str, model: Any) -> str:
     """Finds a replacement for a single token using static embeddings."""
     try:
         # Use`most_similar` from the loaded gensim model
-        similar_words = model.most_similar(token.lower(), topn=5)
-        candidates = [w for w, _ in similar_words if w.isalpha()]
+        similar_words = model.most_similar(token.lower(), topn=30)
+        candidates = [w for w, sim in similar_words if w.strip()]
+        if len(candidates) > 10:
+            # skip the top 10 most similar (too close)
+            candidates = candidates[10:]
         if candidates:
             return random.choice(candidates)
     except KeyError: # Happens if the word is not in the vocabulary
@@ -67,8 +86,8 @@ def get_contextual_substitutions(new_tokens: List[str], original_tokens: List[st
     if batch_results:
         for result_group, i in zip(batch_results, indices):
             valid_preds = [
-                p['token_str'] for p in result_group 
-                if p['token_str'].strip().lower() != original_tokens[i].lower() and p['token_str'].isalpha()
+                p['token_str'] for p in result_group[5:30]  # skip top 5 to avoid identical/redundant tokens
+                if p['token_str'].strip() and p['token_str'].strip().lower() != original_tokens[i].lower()
             ]
             if valid_preds:
                 replacement = random.choice(valid_preds)
@@ -79,7 +98,38 @@ def get_contextual_substitutions(new_tokens: List[str], original_tokens: List[st
     
     return new_tokens
 
-# TODO: Add Antonym method
+def get_antonym_for_token(token: str, pos_tag: str) -> str:
+    """Finds an antonym for a given token using WordNet."""
+    lemmatizer = WordNetLemmatizer()
+    wn_pos = penn_to_wordnet(pos_tag)
+    if not wn_pos:
+        return token
+
+    lemma = lemmatizer.lemmatize(token.lower(), pos=wn_pos)
+    antonyms = set()
+
+    for syn in wordnet.synsets(lemma, pos=wn_pos):
+        for l in syn.lemmas():
+            for ant in l.antonyms():
+                antonyms.add(ant.name().replace("_", " "))
+
+    if not antonyms:
+        return token
+
+    replacement = random.choice(list(antonyms))
+    if token.istitle():
+        replacement = replacement.title()
+    elif token.isupper():
+        replacement = replacement.upper()
+    return replacement
+
+def preserve_case(original: str, replacement: str) -> str:
+    """Preserve the capitalization style of the original token."""
+    if original.istitle():
+        return replacement.title()
+    elif original.isupper():
+        return replacement.upper()
+    return replacement
 
 def semantic_noise(
     tokens: List[str], 
@@ -87,39 +137,71 @@ def semantic_noise(
     ner_tags: List[int], 
     id2label: Dict[int, str], 
     p: float, 
-    ops: List[str],
+    ops: List[str] = None,
     entity_strategy: str = "protect",
     **kwargs
 ) -> List[str]:
     """
     Applies a mix of semantic operations.
     """
-    candidate_idxs = []
+    if ops is None or len(ops) == 0:
+        ops = ["synonym", "word_embs","antonym", "contextual"]
+    
+    """
+    print(f"[semantic_noise] Applying semantic noise with ops={ops}, "
+          f"p={p}, entity_strategy='{entity_strategy}'")
+    """
+
+    new_tokens = list(tokens)
+    n = len(tokens)
+
+    candidates = []
+    weights = []
+
     for i, tok in enumerate(tokens):
-        # 1. Apply general token protection
         if protect_token(tok):
             continue
+        
+        label = id2label[ner_tags[i]]
+        is_entity = label.startswith("B-") or label.startswith("I-")
 
-        # 2. Apply entity-based strategy
-        is_entity = id2label[ner_tags[i]].startswith("B-") or id2label[ner_tags[i]].startswith("I-")
+        # --- Entity strategy control ---
         if entity_strategy == "protect" and is_entity:
+            # Skip entities entirely
             continue
         if entity_strategy == "entities_only" and not is_entity:
+            # Only allow entities to be candidates
             continue
-        
-        # 3. Apply part-of-speech filter (only augment content words - Nouns, verbs, adjectives and adverbs)
-        if pos_tags[i].startswith(("N", "V", "J", "R")):
-             candidate_idxs.append(i)
 
-    k = max(0, int(round(len(candidate_idxs) * p)))
-    if k == 0 or not ops:
+        # Add to candidate list
+        candidates.append(i)
+
+        # Weight content words higher
+        if pos_tags[i].startswith(("N", "V", "J", "R")):
+            weights.append(3.0)
+        elif pos_tags[i].startswith(("P", "C", "I", "D")):
+            weights.append(1.5)
+        else:
+            weights.append(1.0)
+
+    if not candidates:
         return tokens
     
-    change_indices = random.sample(candidate_idxs, k)
-    new_tokens = list(tokens)
+    k = max(1, int(round(n * p)))
+    k = min(k, len(candidates))  # avoid selecting more than available candidates
+
+    weights = np.array(weights)
+    probs = weights / weights.sum()
+
+    chosen_candidates = np.random.choice(candidates, size=k, replace=False, p=probs)
+
+    need_static_model = any(op in ["word_embs", "synonym", "antonym"] for op in ops)
+    static_model = None
+    if need_static_model:
+        static_model = load_static_embedding_model(kwargs.get("model_path", "glove-wiki-gigaword-100"))
 
     # Decide which operation to use for each index BEFORE executing
-    op_plan = {idx: random.choice(ops) for idx in change_indices}
+    op_plan = {idx: random.choice(ops) for idx in chosen_candidates}
     grouped_ops = defaultdict(list)
     for idx, op_name in op_plan.items():
         grouped_ops[op_name].append(idx)
@@ -127,18 +209,24 @@ def semantic_noise(
     
     if "synonym" in grouped_ops:
         for i in grouped_ops["synonym"]:
-            replacement = get_synonym_for_token(new_tokens[i], pos_tags[i])
-            if new_tokens[i].istitle(): replacement = replacement.title()
-            elif new_tokens[i].isupper(): replacement = replacement.upper()
-            new_tokens[i] = replacement
+            replacement = get_synonym_for_token(new_tokens[i], pos_tags[i], min_diff=0.5)
+            if replacement == new_tokens[i]:
+                #Fallback: try embedding-based replacement if synonym failed
+                replacement = get_word_embedding_for_token(new_tokens[i], static_model)
+            new_tokens[i] = preserve_case(new_tokens[i], replacement)
+
+    if "antonym" in grouped_ops:
+        for i in grouped_ops["antonym"]:
+            replacement = get_antonym_for_token(new_tokens[i], pos_tags[i])
+            #Fallback: use embedding-based replacement if no antonym found
+            if replacement == new_tokens[i] and static_model is not None:
+                replacement = get_word_embedding_for_token(new_tokens[i], static_model)
+            new_tokens[i] = preserve_case(new_tokens[i], replacement)
     
     if "word_embs" in grouped_ops:
-        model = load_static_embedding_model(kwargs.get("model_path", "glove-wiki-gigaword-100"))
         for i in grouped_ops["word_embs"]:
-            replacement = get_word_embedding_for_token(new_tokens[i], model)
-            if new_tokens[i].istitle(): replacement = replacement.title()
-            elif new_tokens[i].isupper(): replacement = replacement.upper()
-            new_tokens[i] = replacement
+            replacement = get_word_embedding_for_token(new_tokens[i], static_model)
+            new_tokens[i] = preserve_case(new_tokens[i], replacement)
             
     # Process the expensive contextual operation in a single, efficient batch
     if "contextual" in grouped_ops:

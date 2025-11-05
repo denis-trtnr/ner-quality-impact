@@ -6,7 +6,7 @@ from .syntactic import punct_insert, punct_delete, whitespace_merge, syntactic_n
 
 # Registry maps string keys to callables
 TOKEN_NOISE: Dict[str, Callable] = {
-    "typo_tokens": typo_tokens,                     # args: tokens, ner_tags, id2label, p, protect_entities, ops?
+    "typo_tokens": typo_tokens,                     # args: tokens, ner_tags, id2label, p, entity_strategy, ops?
     "random_case_flip": random_case_flip,           # args: word, prob
     "strip_diacritics": strip_diacritics,           # args: word
     "semantic_noise": semantic_noise,               # args: tokens, pos_tags, ner_tags, id2label, p, ops, entity_strategy, model_path
@@ -17,5 +17,5 @@ TOKEN_NOISE: Dict[str, Callable] = {
 }
 
 LABEL_NOISE: Dict[str, Callable] = {
-    "label_spans_uniform": apply_label_noise_on_spans, # args: ner_tags, id2label, label2id, p, to_O_prob
+    "apply_label_noise_on_spans": apply_label_noise_on_spans, # args: tokens, ner_tags, id2label, label2id, p
 }
