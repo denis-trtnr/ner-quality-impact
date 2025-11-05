@@ -183,11 +183,12 @@ def main():
     )
     data_collator = DataCollatorForTokenClassification(tokenizer)
 
-    os.makedirs(args.out, exist_ok=True)
-
     # Create metadata for W&B
     profile_name = os.path.basename(args.profile).replace(".yaml", "")
-    run_name = f"{args.model}-{profile_name}-seed{args.seed}"
+    run_name = f"{args.model}-{profile_name}-seed{args.seed}".replace("/", "_")
+
+    args.out = os.path.join(args.out, run_name)
+    os.makedirs(args.out, exist_ok=True)
 
     training_args = TrainingArguments(
         output_dir=args.out,

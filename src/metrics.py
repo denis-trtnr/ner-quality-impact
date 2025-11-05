@@ -4,7 +4,7 @@ from collections import Counter
 from seqeval.metrics.sequence_labeling import get_entities
 
 
-seqeval_metric = evaluate.load("seqeval")
+seqeval_metric = evaluate.load("seqeval", keep_in_memory=True)
 
 
 def compute_metrics_builder(id2label):
