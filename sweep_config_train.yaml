@@ -33,7 +33,7 @@ parameters:
   lr:
     values: [3e-5] # 3e-5, 3e-4
   seed:
-    values: [42] # 331, 42, 20301
+    values: [31, 42, 2030] # 31, 42, 2030
 
 command:
   - ${env}
