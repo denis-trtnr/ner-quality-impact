@@ -71,6 +71,7 @@ def syntactic_noise(
       - whitespace_merge_at    (merges token with next)
       - whitespace_split_at    (splits token into two at random position)
       - token_drop_at          (deletes token)
+      - token_repeat_at        (repeats token once or twice)
       - token_swap_adjacent_at (swaps token with next token)
     """
     if not tokens or p <= 0.0:
@@ -83,6 +84,7 @@ def syntactic_noise(
             whitespace_merge_at,
             whitespace_split_at,
             token_drop_at,
+            token_repeat_at,
             token_swap_adjacent_at,
         ]
 
@@ -183,6 +185,25 @@ def token_drop_at(tokens: List[str], labels: List[int], i: int, **additional_par
     t, l = tokens[:], labels[:]
     del t[i]; del l[i]
     return t, l, i
+
+def token_repeat_at(tokens: List[str], labels: List[int], i: int, **additional_params) -> Tuple[List[str], List[int], int]:
+    """
+    Repeat token i one or more times (default: once).
+    Keeps same label(s) for repeated tokens.
+    """
+    if i >= len(tokens):
+        return tokens, labels, i + 1
+
+    # Decide how many times to repeat (usually 1, sometimes 2)
+    n_repeat = 1 if random.random() < 0.9 else 2
+
+    t, l = tokens[:], labels[:]
+    tok, lab = t[i], l[i]
+
+    for _ in range(n_repeat):
+        t.insert(i + 1, tok)
+        l.insert(i + 1, lab)
+    return t, l, i + n_repeat + 1
 
 def token_swap_adjacent_at(tokens: List[str], labels: List[int], i: int, **additional_params) -> Tuple[List[str], List[int], int]:
     """Swap tokens i and i+1 and labels."""
