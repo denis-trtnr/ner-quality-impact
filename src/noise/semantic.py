@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from typing import List, Dict, Any
+from datasets import Dataset
 from collections import defaultdict
 
 import nltk
@@ -74,8 +75,11 @@ def get_contextual_substitutions(new_tokens: List[str], original_tokens: List[st
     # Create a batch of sentences, each with a different token masked
     batch_of_masked_sentences = [" ".join(original_tokens[:i] + [mask_token] + original_tokens[i+1:]) for i in indices]
 
+    # Convert this local batch into a Hugging Face Dataset
+    dataset = Dataset.from_dict({"text": batch_of_masked_sentences})
+
     try:
-        batch_results = fill_masker(batch_of_masked_sentences)
+        batch_results = fill_masker(dataset, batch_size=16)
     except Exception:
         return new_tokens # Return the tokens unmodified if the model fails
 
