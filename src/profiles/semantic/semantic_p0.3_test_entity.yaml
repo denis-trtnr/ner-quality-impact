@@ -1,0 +1,10 @@
+seed: 42
+scope:
+  token_noise: [test]
+  label_noise: []
+token_noise:
+  - name: semantic_noise
+    params:
+      p: 0.30 # fraction of tokens per sentence
+      entity_strategy: "entities_only" # "protect", "entities_only", "all"
+      #ops: ["contextual"]
