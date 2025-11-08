@@ -74,7 +74,7 @@ def apply_profile(ds: DatasetDict, profile, id2label, label2id, id2pos):
     label_scopes = scope.get("label_noise", [])
 
     token_mapper, label_mapper = build_mappers(profile, id2label, label2id, id2pos)
-    use_cache = True
+    use_cache = False
     if token_scopes:
         if "train" in token_scopes and profile.get("token_noise"):
             print("[apply_profile] Mapping token noise on TRAIN...")
