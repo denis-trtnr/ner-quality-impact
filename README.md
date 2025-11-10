@@ -1,7 +1,6 @@
-# 🧠 NER Quality Impact  
+# NER Quality Impact  
 
-This project investigates how **data quality** influences the performance of different **Named Entity Recognition (NER)** models.  
-It systematically introduces **noise** into datasets (train, validation, and test sets) at varying **noise rates** and **stages** to measure robustness and generalization of various NER architectures.
+This project investigates how **data quality** influences the performance of different **Named Entity Recognition (NER)** models. It systematically introduces **noise** into datasets (train, validation, and test sets) at varying **noise rates** and **stages** to measure robustness and generalization of various NER architectures.
 
 > 📚 **This work was conducted as part of a study in collaboration with the [DFKI Speech & Language Technology Lab](https://www.dfki.de/en/web/research/research-departments/speech-and-language-technology)**
 
@@ -64,6 +63,8 @@ python -m src.train \
     --max_length 256 \
     --seed 42
 ```
+---
+
 
 ### 2️⃣ Using Provided Shell Scripts
 💻 Local Execution
@@ -76,6 +77,7 @@ bash scripts/run_profile.sh bert-base-cased src/profiles/orthographic/orthograph
 bash scripts/run_profile_pegasus.sh bert-base-cased src/profiles/orthographic/orthographic_p0.1_test_all.yaml
 
 ```
+---
 
 ### 3️⃣ Running W&B Sweeps
 This project uses **grid search sweeps** with **Weights & Biases (W&B)** to automate structured experiments.  
