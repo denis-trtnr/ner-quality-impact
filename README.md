@@ -4,7 +4,7 @@ This project investigates how **data quality** influences the performance of dif
 
 > 📚 **This work was conducted as part of a study in collaboration with the [DFKI Speech & Language Technology Lab](https://www.dfki.de/en/web/research/research-departments/speech-and-language-technology)**
 
-## 🧩 Repository Structure
+## 🗂️ Repository Structure
 
 ```bash
 ner-quality-impact/
