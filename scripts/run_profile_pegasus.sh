@@ -8,9 +8,9 @@ bash /home/dtrautner/dev/pegasus-bridle/wrapper.sh \
   python -m src.train \
     --model "$MODEL" \
     --profile "$PROFILE" \
-    --epochs 3 \
+    --epochs 5 \
     --batch_size 16 \
     --lr 3e-5 \
     --max_length "$MAX_LENGTH" \
     --seed 42 \
-    --out outputs/$(basename "$PROFILE" .yaml)
+    --out "./outputs"
